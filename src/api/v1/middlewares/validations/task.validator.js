@@ -10,7 +10,7 @@ const objectIdValidator = (value, helpers) => {
     return value;
 };
 
-// Generic validation middleware runner
+// Generic validation middleware runner compatible with Express 5
 export const validate = (schema, source = 'body') => {
     return (req, res, next) => {
         const dataToValidate = req[source];
@@ -24,7 +24,26 @@ export const validate = (schema, source = 'body') => {
             return badRequest(res, errorMessage, 'ValidationError');
         }
 
-        req[source] = value;
+        if (source === 'body') {
+            req.body = value;
+        } else if (source === 'query') {
+            req.validatedQuery = value;
+            for (const key of Object.keys(value)) {
+                try {
+                    req.query[key] = value[key];
+                } catch {
+                    // In Express 5 req.query might have read-only props
+                }
+            }
+        } else if (source === 'params') {
+            req.validatedParams = value;
+            for (const key of Object.keys(value)) {
+                try {
+                    req.params[key] = value[key];
+                } catch {}
+            }
+        }
+
         next();
     };
 };

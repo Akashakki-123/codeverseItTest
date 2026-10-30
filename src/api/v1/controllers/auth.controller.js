@@ -30,7 +30,6 @@ export async function getMe(req, res) {
 
 export async function updateMe(req, res) {
     try {
-        // Users can update their own name/email (not role)
         const updateData = { name: req.body.name, email: req.body.email };
         const { status, statusCode, message, data } = await authService.updateUser(req.user.id, updateData);
         return sendResponse(res, statusCode, status, message, status ? null : message, data);
@@ -41,7 +40,8 @@ export async function updateMe(req, res) {
 
 export async function getAllUsers(req, res) {
     try {
-        const { status, statusCode, message, data } = await authService.getAllUsers(req.query);
+        const query = req.validatedQuery || req.query || {};
+        const { status, statusCode, message, data } = await authService.getAllUsers(query);
         return sendResponse(res, statusCode, status, message, status ? null : message, data);
     } catch (error) {
         return unknownError(res, error);
@@ -50,7 +50,8 @@ export async function getAllUsers(req, res) {
 
 export async function getUserById(req, res) {
     try {
-        const { status, statusCode, message, data } = await authService.getUserById(req.params.id);
+        const id = req.validatedParams?.id || req.params.id;
+        const { status, statusCode, message, data } = await authService.getUserById(id);
         return sendResponse(res, statusCode, status, message, status ? null : message, data);
     } catch (error) {
         return unknownError(res, error);
@@ -59,7 +60,8 @@ export async function getUserById(req, res) {
 
 export async function updateUser(req, res) {
     try {
-        const { status, statusCode, message, data } = await authService.updateUser(req.params.id, req.body);
+        const id = req.validatedParams?.id || req.params.id;
+        const { status, statusCode, message, data } = await authService.updateUser(id, req.body);
         return sendResponse(res, statusCode, status, message, status ? null : message, data);
     } catch (error) {
         return unknownError(res, error);
@@ -68,7 +70,8 @@ export async function updateUser(req, res) {
 
 export async function deleteUser(req, res) {
     try {
-        const { status, statusCode, message, data } = await authService.deleteUser(req.params.id);
+        const id = req.validatedParams?.id || req.params.id;
+        const { status, statusCode, message, data } = await authService.deleteUser(id);
         return sendResponse(res, statusCode, status, message, status ? null : message, data);
     } catch (error) {
         return unknownError(res, error);
