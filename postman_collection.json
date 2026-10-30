@@ -1,64 +1,40 @@
 {
   "info": {
-    "_postman_id": "f7b29a61-83d4-4aa6-9b5f-73a6ad6d31e2",
-    "name": "Task Management REST API",
-    "description": "Postman collection for every implemented public, authentication, and task-management API. Register and log in as either the user or admin actor; both roles can use the task endpoints, which are scoped to the authenticated account.",
+    "_postman_id": "7b89f5a0-9c1d-4861-a87b-task-management-api",
+    "name": "Task Management & User Auth REST API",
+    "description": "Production-grade REST API Postman Collection.\nFeatures complete User & Auth CRUD, Task CRUD with Ownership Filtering, Joi Validation, Pagination, and Error Handling.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{token}}",
-        "type": "string"
-      }
-    ]
   },
   "variable": [
     {
-      "key": "baseUrl",
-      "value": "http://localhost:8000",
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
       "type": "string"
     },
     {
-      "key": "token",
+      "key": "jwt_token",
       "value": "",
       "type": "string"
     },
     {
-      "key": "taskId",
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Public_APIs",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "auth": {
-              "type": "noauth"
-            },
-            "url": "{{baseUrl}}/",
-            "description": "Checks that the API server is online."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Auth",
+      "name": "1. Authentication & User Operations",
       "item": [
         {
           "name": "Register User",
           "request": {
             "method": "POST",
-            "auth": {
-              "type": "noauth"
-            },
             "header": [
               {
                 "key": "Content-Type",
@@ -67,142 +43,33 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Alex Morgan\",\n  \"email\": \"alex.morgan@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"user\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"user\"\n}"
             },
-            "url": "{{baseUrl}}/api/auth/register",
-            "description": "Creates a standard user account. The registration endpoint accepts the user role."
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user."
           }
         },
         {
-          "name": "Register Admin",
-          "request": {
-            "method": "POST",
-            "auth": {
-              "type": "noauth"
-            },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Taylor Reed\",\n  \"email\": \"taylor.reed@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"role\": \"admin\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{baseUrl}}/api/auth/register",
-            "description": "Creates an admin account using the role value accepted by the registration validator."
-          }
-        },
-        {
-          "name": "Login User (saves token)",
+          "name": "Login User (Auto-saves JWT Token)",
           "event": [
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set(\"token\", pm.response.json().items?.token || pm.response.json().data?.token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "auth": {
-              "type": "noauth"
-            },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"alex.morgan@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{baseUrl}}/api/auth/login",
-            "description": "Logs in the user actor. Run Register User first if this account is not already present. Saves the JWT to the Postman environment variable token."
-          }
-        },
-        {
-          "name": "Login Admin (saves token)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.environment.set(\"token\", pm.response.json().items?.token || pm.response.json().data?.token);"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "auth": {
-              "type": "noauth"
-            },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"taylor.reed@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{baseUrl}}/api/auth/login",
-            "description": "Logs in the admin actor. Run Register Admin first if this account is not already present. Saves the JWT to the Postman environment variable token."
-          }
-        },
-        {
-          "name": "Get Current User Profile",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/auth/me",
-            "description": "Returns the profile for the account represented by the current Bearer token."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Task_Management (User and Admin)",
-      "item": [
-        {
-          "name": "Create Task (saves taskId)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
                 "exec": [
                   "const response = pm.response.json();",
-                  "const taskId = response.data?.id || response.items?.id;",
-                  "if (taskId) pm.environment.set(\"taskId\", taskId);"
-                ]
+                  "if (response.data && response.data.token) {",
+                  "    pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "    console.log('JWT Token successfully saved: ' + response.data.token);",
+                  "}",
+                  "if (response.data && response.data.user) {",
+                  "    pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
               }
             }
           ],
@@ -216,124 +83,343 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Prepare project delivery plan\",\n  \"description\": \"Finalize milestones, owners, and review dates for the next release.\",\n  \"priority\": \"high\",\n  \"status\": \"pending\",\n  \"dueDate\": \"2026-11-15T17:00:00.000Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"email\": \"johndoe@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
             },
-            "url": "{{baseUrl}}/api/tasks",
-            "description": "Creates a task owned by the authenticated user and stores its ID as the taskId environment variable."
-          }
-        },
-        {
-          "name": "List Tasks (pagination, filters, search, sort)",
-          "request": {
-            "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/tasks?page=1&limit=10&status=pending&priority=high&search=project&sortBy=dueDate&order=asc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "tasks"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "status",
-                  "value": "pending"
-                },
-                {
-                  "key": "priority",
-                  "value": "high"
-                },
-                {
-                  "key": "search",
-                  "value": "project"
-                },
-                {
-                  "key": "sortBy",
-                  "value": "dueDate"
-                },
-                {
-                  "key": "order",
-                  "value": "asc"
-                }
-              ]
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
             },
-            "description": "Lists only tasks owned by the authenticated account. Supported filters include status, priority, and search; sorting supports createdAt, dueDate, priority, or title."
+            "description": "Authenticates user and returns JWT token."
           }
         },
         {
-          "name": "Get Task By ID",
+          "name": "Get Profile (/me)",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
-            "description": "Gets a task owned by the authenticated account. Run Create Task first to populate taskId."
-          }
-        },
-        {
-          "name": "Update Task (PUT)",
-          "request": {
-            "method": "PUT",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Deliver reviewed project plan\",\n  \"description\": \"Publish the reviewed release plan with owners and milestone dates.\",\n  \"priority\": \"urgent\",\n  \"status\": \"in-progress\",\n  \"dueDate\": \"2026-11-18T17:00:00.000Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
             },
-            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
-            "description": "Updates all allowed task fields. Requires a taskId created by the currently authenticated account."
+            "description": "Returns authenticated user profile."
           }
         },
         {
-          "name": "Partially Update Task (PATCH)",
+          "name": "Update Profile (/me)",
           "request": {
             "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"completed\",\n  \"priority\": \"medium\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n  \"name\": \"John Updated\"\n}"
             },
-            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
-            "description": "Updates only the supplied allowed task fields. Requires a taskId created by the currently authenticated account."
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Updates authenticated user profile."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"BrandNewPassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Changes user password after bcrypt validation."
+          }
+        },
+        {
+          "name": "Get All Users (Pagination & Filters)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users?page=1&limit=10&role=user&sortBy=createdAt&order=desc",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "role", "value": "user", "disabled": true },
+                { "key": "search", "value": "John", "disabled": true },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "order", "value": "desc" }
+              ]
+            },
+            "description": "Retrieves all users list with pagination, role filtering, and search."
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users", "{{user_id}}"]
+            },
+            "description": "Gets specific user details by ID."
+          }
+        },
+        {
+          "name": "Update User By ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Super\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users", "{{user_id}}"]
+            },
+            "description": "Updates user by ID."
+          }
+        },
+        {
+          "name": "Delete User By ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users", "{{user_id}}"]
+            },
+            "description": "Deletes user and cascades deletion of user tasks."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Tasks Management",
+      "item": [
+        {
+          "name": "Create Task (Auto-saves Task ID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const taskId = response.data?.id || response.data?._id;",
+                  "if (taskId) {",
+                  "    pm.collectionVariables.set('task_id', taskId);",
+                  "    console.log('Task ID saved: ' + taskId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete Machine Test Assignment\",\n  \"description\": \"Build production-grade Task REST API with Node.js and Express\",\n  \"priority\": \"high\",\n  \"status\": \"pending\",\n  \"dueDate\": \"2026-11-05T12:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Creates task associated with authenticated user identity."
+          }
+        },
+        {
+          "name": "List Tasks (Filtered & Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks?page=1&limit=10&status=pending&sortBy=createdAt&order=desc",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "pending" },
+                { "key": "priority", "value": "high", "disabled": true },
+                { "key": "search", "value": "Assignment", "disabled": true },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "order", "value": "desc" }
+              ]
+            },
+            "description": "Returns list of tasks belonging strictly to the authenticated user."
+          }
+        },
+        {
+          "name": "Get Task By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}"]
+            },
+            "description": "Retrieves task by ID. Returns 404 if the task belongs to another user."
+          }
+        },
+        {
+          "name": "Update Task (PATCH / PUT)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in-progress\",\n  \"priority\": \"urgent\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}"]
+            },
+            "description": "Updates allowed task fields."
           }
         },
         {
           "name": "Delete Task",
           "request": {
             "method": "DELETE",
-            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
-            "description": "Deletes a task owned by the authenticated account."
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id}}"]
+            },
+            "description": "Deletes user-owned task."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Error & Validation Edge Cases",
+      "item": [
+        {
+          "name": "Invalid ObjectId Handling (Returns 400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tasks/invalid-object-id-123",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "invalid-object-id-123"]
+            },
+            "description": "Validates ObjectId format and returns clean 400 response."
+          }
+        },
+        {
+          "name": "Unauthorized Access (No Token - Returns 401)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Verifies that accessing protected endpoints without Bearer token returns 401."
           }
         }
       ]

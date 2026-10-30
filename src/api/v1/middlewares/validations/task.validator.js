@@ -61,6 +61,35 @@ export const loginSchema = Joi.object({
     })
 });
 
+export const updateUserSchema = Joi.object({
+    name: Joi.string().trim().min(2).max(50).optional(),
+    email: Joi.string().trim().email().optional(),
+    role: Joi.string().valid('user', 'admin').optional()
+}).min(1).messages({
+    'object.min': 'At least one field (name, email, or role) must be provided for update'
+});
+
+export const changePasswordSchema = Joi.object({
+    currentPassword: Joi.string().required().messages({
+        'string.empty': 'Current password is required',
+        'any.required': 'Current password is required'
+    }),
+    newPassword: Joi.string().min(6).max(100).required().messages({
+        'string.empty': 'New password is required',
+        'string.min': 'New password must be at least 6 characters long',
+        'any.required': 'New password is required'
+    })
+});
+
+export const listUsersQuerySchema = Joi.object({
+    page: Joi.number().integer().min(1).default(1).optional(),
+    limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+    role: Joi.string().valid('user', 'admin').optional(),
+    search: Joi.string().trim().allow('').optional(),
+    sortBy: Joi.string().valid('createdAt', 'name', 'email', 'role').default('createdAt').optional(),
+    order: Joi.string().valid('asc', 'desc').default('desc').optional()
+});
+
 // Task Validators
 export const createTaskSchema = Joi.object({
     title: Joi.string().trim().min(1).max(200).required().messages({
@@ -95,7 +124,7 @@ export const listTasksQuerySchema = Joi.object({
 
 export const idParamSchema = Joi.object({
     id: Joi.string().custom(objectIdValidator, 'ObjectId validation').required().messages({
-        'any.invalid': 'Invalid task ID format. Must be a valid 24-character MongoDB ObjectId',
-        'any.required': 'Task ID parameter is required'
+        'any.invalid': 'Invalid ID format. Must be a valid 24-character MongoDB ObjectId',
+        'any.required': 'ID parameter is required'
     })
 });

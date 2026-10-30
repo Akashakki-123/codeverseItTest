@@ -1,19 +1,19 @@
-# Task Management REST API (Node.js & Express)
+# Task Management & User Auth REST API (Node.js & Express)
 
-A production-grade, secure, and modular RESTful API for Task Management built using **Node.js**, **Express.js**, **MongoDB (Mongoose)**, **JWT Authentication**, and **Joi Validation**.
+A production-grade, secure, and modular RESTful API built using **Node.js**, **Express.js 5**, **MongoDB (Mongoose)**, **JWT Authentication**, and **Joi Validation**.
 
 ---
 
 ## 1. Features & Architectural Highlights
 
 - **Decoupled Architecture:** Clean separation of concerns following `routes -> controllers -> services -> models -> middlewares`.
-- **JWT Authentication (AuthN):** Stateless token-based authentication using `jsonwebtoken` with 7-day expiration and Bearer scheme.
-- **Strict Data Ownership & Isolation:** Users can **only** read, update, or delete tasks that belong to them. Attempts to access other users' tasks return `404 Not Found` to prevent resource enumeration.
-- **Strict Schema Validation:** Request payloads and query params are strictly validated using **Joi**; invalid inputs trigger structured `400 Bad Request` messages.
+- **Complete User & Auth CRUD:** Register, Login, Profile (`/me`), Update Profile, Change Password, and full User CRUD (`/api/auth/users` and `/api/users`).
+- **Complete Task CRUD & Ownership Isolation:** Users can **only** read, update, or delete tasks that belong to them. Attempts to access other users' tasks return `404 Not Found` to prevent entity enumeration.
+- **Strict Schema Validation:** All request payloads and query params are strictly validated using **Joi**; invalid inputs trigger structured `400 Bad Request` messages.
 - **Safe MongoDB ID Handling:** Hexadecimal ObjectId validations prevent casting errors (`BSONError`) and server crashes.
 - **Password Security:** Passwords salted and hashed with `bcryptjs` (salt rounds: 10). Passwords are never returned in responses or logged.
-- **Pagination, Filtering & Search:** `/api/tasks` supports full query-based pagination (`page`, `limit`), filtering by `status` and `priority`, text search, and multi-field sorting.
-- **Centralized Error Handling:** Standardized error responses (`{ success, message, data, error }`) with production-safe error masking.
+- **Pagination, Filtering & Search:** Full query-based pagination (`page`, `limit`), filtering by `status`, `priority`, and `role`, text search, and multi-field sorting.
+- **Centralized Error Handling:** Standardized error responses (`{ success, message, data, error }`).
 
 ---
 
@@ -40,17 +40,18 @@ src/
         │   ├── socket.js          # Socket.IO configuration
         │   └── firebase.js        # Firebase Admin modular initialization
         ├── controllers/
-        │   ├── auth.controller.js # Auth request parsing & response dispatching
+        │   ├── auth.controller.js # User & Auth request parsing & response dispatching
         │   └── task.controller.js # Task request parsing & response dispatching
         ├── services/
-        │   ├── auth.service.js    # Authentication business logic & token issuance
+        │   ├── auth.service.js    # User & Auth business logic, token issuance & CRUD
         │   └── task.service.js    # Task CRUD business logic & ownership queries
         ├── models/
         │   ├── user.model.js      # User schema with sanitized toJSON
         │   └── task.model.js      # Task schema with compound indexes
         ├── routes/
-        │   ├── auth.routes.js     # /api/auth endpoints
-        │   └── task.routes.js     # /api/tasks endpoints (auth protected)
+        │   ├── auth.routes.js     # /api/auth endpoints (Auth + User operations)
+        │   ├── user.routes.js     # /api/users endpoints (User CRUD)
+        │   └── task.routes.js     # /api/tasks endpoints (Auth protected)
         ├── middlewares/
         │   ├── auth.middleware.js # JWT verification & role authorization
         │   └── validations/
@@ -77,30 +78,19 @@ postman_collection.json            # Importable Postman Collection (v2.1)
 
 ### Installation
 
-1. **Clone or Navigate to Project:**
-   ```bash
-   cd codeverseItTest
-   ```
-
-2. **Install Dependencies:**
+1. **Install Dependencies:**
    ```bash
    npm install
    ```
 
-3. **Configure Environment Variables:**
-   Copy `.env.example` to `.env`:
+2. **Configure Environment Variables:**
    ```bash
    cp .env.example .env
    ```
-   *Verify your MongoDB URI and port in `.env`.*
 
-4. **Start the Development Server:**
+3. **Start the Development Server:**
    ```bash
    npm run dev
-   ```
-   *Or production start:*
-   ```bash
-   npm start
    ```
    *Server will run at:* `http://localhost:8000`
 
@@ -110,39 +100,19 @@ postman_collection.json            # Importable Postman Collection (v2.1)
 
 All functional endpoints are mounted on `/api` (as well as `/v1`):
 
-### 5.1 Authentication Module
+### 5.1 Authentication & User Management Module
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Public | Register new user with `name`, `email`, `password` |
+| `POST` | `/api/auth/register` | Public | Register new user with `name`, `email`, `password`, `role` |
 | `POST` | `/api/auth/login` | Public | Authenticate user and receive JWT token |
 | `GET` | `/api/auth/me` | Protected | Get authenticated user's profile |
-
-#### Register Request Body:
-```json
-{
-  "name": "Jane Doe",
-  "email": "jane@example.com",
-  "password": "SecurePassword123!"
-}
-```
-
-#### Register / Login Response (200 / 201):
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": {
-      "id": "672200a0b6e1...",
-      "name": "Jane Doe",
-      "email": "jane@example.com",
-      "role": "user"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
+| `PATCH/PUT`| `/api/auth/me` | Protected | Update authenticated user's profile |
+| `POST` | `/api/auth/change-password` | Protected | Change password with current password verification |
+| `GET` | `/api/auth/users` | Protected | **Get All Users** with pagination, search, role filters, sorting |
+| `GET` | `/api/auth/users/:id` | Protected | **Get User by ID** |
+| `PATCH/PUT`| `/api/auth/users/:id` | Protected | **Update User by ID** |
+| `DELETE` | `/api/auth/users/:id` | Admin Only | **Delete User by ID** (cascades deletion of user tasks) |
 
 ---
 
@@ -157,76 +127,18 @@ All functional endpoints are mounted on `/api` (as well as `/v1`):
 | `PATCH` | `/api/tasks/:id` | `id` (MongoDB ObjectId) | Partial update of allowed task fields |
 | `DELETE` | `/api/tasks/:id` | `id` (MongoDB ObjectId) | Delete user's task |
 
-#### Create Task Request Body:
-```json
-{
-  "title": "Complete Code Review",
-  "description": "Review pull requests and ensure 100% test coverage",
-  "priority": "high",
-  "status": "pending",
-  "dueDate": "2026-11-01T18:00:00.000Z"
-}
-```
-
-#### Example Success Response (Complies with assignment spec):
-```json
-{
-  "success": true,
-  "message": "Task created successfully",
-  "data": {
-    "id": "672201b5c9a2...",
-    "title": "Complete Code Review",
-    "description": "Review pull requests and ensure 100% test coverage",
-    "status": "pending",
-    "priority": "high",
-    "dueDate": "2026-11-01T18:00:00.000Z",
-    "createdAt": "2026-10-30T10:30:00.000Z"
-  }
-}
-```
-
-#### Example Error Response (400 Bad Request):
-```json
-{
-  "success": false,
-  "status": false,
-  "message": "Title is required",
-  "error": "ValidationError"
-}
-```
-
 ---
 
-## 6. Security & Design Decisions Note
-
-1. **Authentication & Identity Isolation:**
-   - Client requests are **never trusted** to supply a `userId` in the body when creating or accessing tasks.
-   - The user identity is extracted purely from the verified JWT payload (`req.user.id`).
-   - Every task query enforces `{ _id: taskId, userId: req.user.id }`. If another user attempts to read, update, or delete an unauthorized task, a `404 Not Found` is returned rather than `403 Forbidden` to prevent malicious entity enumeration.
-
-2. **Defense Against Malformed ObjectIds:**
-   - Parameter validators ensure incoming route params conform to 24-character hex format before reaching database drivers, completely eliminating unhandled cast exceptions.
-
-3. **Information Disclosure Prevention:**
-   - User Mongoose schema applies a `transform` hook deleting `password` and `__v` from all JSON serialization.
-   - Passwords are never sent back in signup/login responses.
-   - Internal stack traces are suppressed in production mode.
-
-4. **Database Performance:**
-   - Compound indexes are established on `{ userId: 1, status: 1 }` and `{ userId: 1, createdAt: -1 }` to support low-latency querying and pagination on growing datasets.
-
----
-
-## 7. Testing & Verification
+## 6. Testing & Verification
 
 ### Automated Smoke Test Suite
 A self-contained test runner is included in the project root:
 ```bash
 node smoke-test.js
 ```
-*Verifies all 10 critical paths including registration, validation rules, token issuance, CRUD operations, and cross-user security isolation.*
+*Verifies all critical paths: User Auth & Registration, Profile Update, Password Change, User List & Retrieval, User Delete, Task CRUD, and cross-user security isolation.*
 
 ### Postman Collection
 Import [`postman_collection.json`](./postman_collection.json) into Postman:
-- Includes pre-configured environment variables (`{{base_url}}`, `{{jwt_token}}`, `{{task_id}}`).
+- Includes pre-configured environment variables (`{{base_url}}`, `{{jwt_token}}`, `{{user_id}}`, `{{task_id}}`).
 - The **Login** request has a test script that **automatically saves the returned JWT** into collection variables for subsequent requests.
